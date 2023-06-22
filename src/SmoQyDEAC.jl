@@ -1,5 +1,19 @@
 module SmoQyDEAC
 
-# Write your package code here.
+using Random
+using Statistics
+using FileIO
+using Printf
+# using Documenter
+include("DEAC/types.jl")
+include("DEAC/deac.jl")
+include("DEAC/jackknife.jl")
+include("DEAC/kernels.jl")
+include("DEAC/utility.jl")
+include("DEAC/checkpoint.jl")
+# include("DEAC/deac_sc.jl")
 
-end
+export DEAC
+
+# export DEAC_sc
+end # module SmoQyDEAC
