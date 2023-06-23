@@ -4,9 +4,9 @@ using Documenter
 using Literate
 
 example_names = ["fermion_greens"]#,"phonon_greens"]
-example_literate_sources = ["src/examples/"*name*".jl" for name in example_names]
-example_script_destinations = ["../scripts" for name in example_names]
-example_documentation_destination = "src/examples"
+example_literate_sources = [joinpath(@__DIR__,"src/examples/"*name*".jl") for name in example_names]
+example_script_destinations = [joinpath(@__DIR__,"../scripts") for name in example_names]
+example_documentation_destination = joinpath(@__DIR__,"build/examples")
 example_documentation_paths = ["examples/$name.md" for name in example_names]
 
 
