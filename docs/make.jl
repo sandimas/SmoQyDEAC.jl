@@ -1,4 +1,5 @@
-using SmoQyDEAC
+include("../src/SmoQyDEAC.jl")
+using .SmoQyDEAC
 using Documenter
 using Literate
 

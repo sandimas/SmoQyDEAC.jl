@@ -1,12 +1,13 @@
 
 
 # List of allowed kernels
-allowable_kernels = ["freq_bosonic",
-                     "freq_fermionic",
-                     "time_bosonic",
+allowable_kernels = ["time_bosonic",
                      "time_fermionic",
                      "time_bosonic_symmetric",
-                     "time_fermionic_antisymmetric"]
+                    #  "freq_bosonic",
+                    #  "freq_fermionic",
+                    #  "time_fermionic_antisymmetric"
+                    ]
 
 
 
