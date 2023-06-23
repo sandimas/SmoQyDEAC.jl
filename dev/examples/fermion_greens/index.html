@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example 1: Fermion Greens function · SmoQyDEAC.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://sandimas.github.io/SmoQyDEAC.jl/examples/fermion_greens/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">SmoQyDEAC.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Examples</span><ul><li class="is-active"><a class="tocitem" href>Example 1: Fermion Greens function</a></li></ul></li><li><a class="tocitem" href="../../derivations/">Derivations</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example 1: Fermion Greens function</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example 1: Fermion Greens function</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Example-1:-Fermion-Greens-function"><a class="docs-heading-anchor" href="#Example-1:-Fermion-Greens-function">Example 1: Fermion Greens function</a><a id="Example-1:-Fermion-Greens-function-1"></a><a class="docs-heading-anchor-permalink" href="#Example-1:-Fermion-Greens-function" title="Permalink"></a></h1><p>Usage:</p><p><code>$ julia --threads=auto fermion_greens.jl</code></p><p>SmoQyDEAC uses multithreading for parallelizing runs. Multithreading it recommended.   –threads=auto will run a thread for each core available, or 2x for hyperthreading cores</p><p>In this example we will take the up-spin electron Green&#39;s function output from a Determinant Quantum Monte Carlo run generated via <a href="https://github.com/SmoQySuite/SmoQyDQMC.jl"><code>SmoQyDQMC</code></a> using the Holstein Model.</p><p>We note the convention that the correlation function reported as the Green&#39;s Function has ħ=1 and there is no leading negative sign</p><p class="math-container">\[G(k,τ)=⟨T_{τ}c_k(τ)c_k^†(0)⟩\]</p><p>Our relation uses the time fermionic kernel such that</p><p class="math-container">\[G(k,τ)=\int_{-∞}^∞ dω K(ω,τ)A(ω)=\int_{-∞}^∞ \frac{dω}{2} \frac{e^{-τω}}{1+e^{-ωβ}}A(ω)\]</p><p>Since <span>$A(ω)=-ℑG(ω)/π$</span> both negative signs that would normally be in the expression and factors of π cancel.</p><p>On to the example:</p><pre><code class="language-julia hljs"># First we import all required packages
+using SmoQyDEAC
+using FileIO</code></pre><p>We now load the data provided in our source file.</p><pre><code class="language- hljs">loadfile = joinpath(pkgdir(SmoQyDEAC), &quot;docs/src/examples/fermion_greens_input.jld2&quot;)
+input_dictionary = load(loadfile)
+
+G = input_dictionary[&quot;G&quot;];
+G_error = input_dictionary[&quot;σ&quot;];
+τs = input_dictionary[&quot;τs&quot;]; # must be evenly spaced.
+β = input_dictionary[&quot;β&quot;];
+nothing #hide</code></pre><p>Make an output folder for checkpoint file and output file</p><pre><code class="language-julia hljs">output_directory = &quot;fermion_greens_output/&quot;;
+try
+    mkdir(output_directory);
+catch
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">&quot;fermion_greens_output/&quot;</code></pre><p>Define necessary parameters for the DEAC run Typically you will want at least 1,000 for number<em>of</em>bins * runs<em>per</em>bin For speed&#39;s sake we only do 20 in this example.</p><pre><code class="language-julia hljs">number_of_bins = 2;
+runs_per_bin = 1 ;
+output_file = output_directory * &quot;fermion_out.jld2&quot;;
+checkpoint_directory = output_directory;
+nω = 401;
+ωmin = -10.;
+ωmax = 10.;
+ωs = collect(LinRange(ωmin,ωmax,nω));</code></pre><p>Set optional parameters</p><pre><code class="language-julia hljs">base_seed = 1000000;
+# Note, the seed will incement for each run.
+# Starting a new run at 1000020 will have unique output from this run
+keep_bin_data = true;
+# If true, each bin will have it&#39;s data written to the output dictionary
+# Set to false to save disk space</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>Run DEAC Algorithm</p><pre><code class="language- hljs">output_dictionary = DEAC(G,G_error,β,τs,ωs,&quot;time_fermionic&quot;,number_of_bins,runs_per_bin,output_file,
+                         checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)</code></pre><p>Accessing output</p><pre><code class="language- hljs"># Spectral function, 1D array size (nω)
+A = output_dictionary[&quot;A&quot;];
+# Spectral function error, 1D array size (nω)
+A_σ = output_dictionary[&quot;σ&quot;];
+# ω grid, 1D array size (nω)
+ωs_out = output_dictionary[&quot;ωs&quot;];
+# zeroth moment: For fermions it is G(0) + G(β) which should = 1.0. Float64s
+zeroth_calc = output_dictionary[&quot;zeroth_moment&quot;];
+zeroth_σ = output_dictionary[&quot;zeroth_moment_σ&quot;];
+expected_zeroth = output_dictionary[&quot;expected_zeroth_moment&quot;];
+# Number of average generations to converge, Float64
+avg_generations = output_dictionary[&quot;avg_generations&quot;];
+nothing #hide</code></pre><p>Binned information - not available if <code>keep_bin_data=false</code></p><pre><code class="language- hljs"># Bin data, 2D array size (nω,nbins)
+bin_data = output_dictionary[&quot;bin_data&quot;];
+# Standard error for each bin, 2D array size (nω,nbins)
+bin_σ = output_dictionary[&quot;bin_σ&quot;];
+# zeroth moment, 1D array (nbins)
+bin_zeroth = output_dictionary[&quot;bin_zeroth_moment&quot;];
+nothing #hide</code></pre><p>The dictionary will automatically be saved</p><pre><code class="language- hljs"># Example of loading the data from the jld2
+test_dictionary = FileIO.load(output_file)</code></pre><p>This is identical to output_dictionary</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../derivations/">Derivations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Friday 23 June 2023 16:54">Friday 23 June 2023</span>. Using Julia version 1.9.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
