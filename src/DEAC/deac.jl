@@ -124,6 +124,11 @@ function run_DEAC(correlation_function::AbstractVector,
     bin_data = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
     bin_error = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
 
+    # Set error to minimum or Χ² will give garbage
+    minimum_error = 0.00000001
+    correlation_function_error .= max.(correlation_function_error, minimum_error) 
+
+
     # Checkpoint
     if autoresume_from_checkpoint
         chk_exists, chk_dict = find_checkpoint(params)
