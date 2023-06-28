@@ -279,7 +279,7 @@ function run_DEAC(correlation_function::AbstractVector,
             fit, fit_idx = findmin(fitness_old)
             generations[run] = numgen
             # Testing info
-            println("fit,", fit, "\t numgen,", numgen)
+            # println("fit,", fit, "\t numgen,", numgen)
             
             run_data[:,run] = population_old[:,fit_idx]
             
