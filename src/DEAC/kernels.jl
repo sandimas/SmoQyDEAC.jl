@@ -9,27 +9,7 @@ function generate_K(params::DEACParameters)
     K = zeros(Float64,(ngrid,nω))
     dgrid = params.input_grid[2]-params.input_grid[1]
 
-    if params.kernel_type == "freq_bosonic"
-        for ω in 1:nω
-            ω2 = params.out_ωs[ω]^2
-            for ωm in 1:ngrid
-                # L'Hopital 0/0
-                if (params.input_grid[ωm]==0.0 && params.out_ωs[ω] == 0.0)
-                    K[ωm,ω] = 2.0*dgrid
-                else
-                    K[ωm,ω] = 2.0*dgrid*ω2 /(params.input_grid[ωm]^2+ω2)
-                end
-            end
-        end
-    elseif params.kernel_type == "freq_fermionic"
-        for ω in 1:nω
-            ω2 = params.out_ωs[ω]^2
-            for ωm in 1:ngrid
-                
-                K[ωm,ω] = dgrid*params.out_ωs[ω] /(params.input_grid[ωm]^2+ω2)
-            end
-        end
-    elseif params.kernel_type == "time_bosonic"
+    if params.kernel_type == "time_bosonic"
         nb =  n_b(params)
         for ω in 1:nω
             for τ in 1:ngrid
@@ -73,7 +53,7 @@ function n_b(params::DEACParameters)
         if abs(params.out_ωs[ω]) < close
             arr[ω] = 1.0 /params.β
         else
-            arr[ω] = params.out_ωs[ω] / (1 - exp(-params.β * params.out_ωs[ω]))
+            arr[ω] = params.out_ωs[ω] / (1.0 - exp(-params.β * params.out_ωs[ω]))
         end
     end 
     return arr

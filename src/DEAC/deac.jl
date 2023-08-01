@@ -295,6 +295,7 @@ function run_DEAC(correlation_function::AbstractVector,
 
         if  occursin("bosonic",params.kernel_type)
             bin_data[:,bin] = bin_data[:,bin] .* params.out_ωs
+            
         end
         
         println("Finished bin ",bin," of ",params.num_bins)
@@ -313,9 +314,11 @@ function run_DEAC(correlation_function::AbstractVector,
     println("\nSaving data to ",params.output_file," and deleting checkpoint file\n")
     
     println("Run Statistics")
-    println(@sprintf(" Expected 0th moment:   %01.3f ± %01.3f",zeroth_moment,zeroth_moment_err) )
-    println(@sprintf(" DEAC 0th moment:       %01.3f ± %01.3f",zero_avg[1],zero_err[1]))
-    println(@sprintf(" 0th moment difference: %01.3f%%",differential))
+    if occursin("fermionic",params.kernel_type)
+        println(@sprintf(" Expected 0th moment:   %01.3f ± %01.3f",zeroth_moment,zeroth_moment_err) )
+        println(@sprintf(" DEAC 0th moment:       %01.3f ± %01.3f",zero_avg[1],zero_err[1]))
+        println(@sprintf(" 0th moment difference: %01.3f%%",differential))
+    end
     println(@sprintf(" Mean generations/run:  %01.3f",gen_per_run))
     println(" ")
     data, err = jackknife(bin_data)
