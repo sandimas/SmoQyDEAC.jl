@@ -26,7 +26,7 @@ function delete_checkpoint(params::DEACParameters)
 end
 
 
-function save_checkpoint(bin_data, bin_err, bin_num, params::DEACParameters,correlation_function::AbstractVector,correlation_error::AbstractVector,zeroth_momentum::AbstractArray)
+function save_checkpoint(bin_data, bin_err, bin_num, params::DEACParameters,correlation_function::AbstractArray,correlation_error::AbstractArray,zeroth_momentum::AbstractArray)
     file = params.checkpoint_directory*"/DEAC_checkpoint.jld2"
     chk_data = Dict{String,Any}(
         "bin_data" => bin_data,

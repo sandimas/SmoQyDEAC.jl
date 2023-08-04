@@ -468,7 +468,8 @@ function run_DEAC_cov(correlation_function::AbstractMatrix,
     @assert params.stop_minimum_fitness > 0.0
     @assert params.number_of_generations >= 1
     @assert params.base_seed >= 1
-   
+
+    correlation_function_error = Array{Float64}(undef,(1,1))
     start_bin = 1
 
     calculated_zeroth_moment = zeros(Float64,(1,params.num_bins))
