@@ -12,7 +12,7 @@ Open a Julia REPL environment and run the following command:
 ```julia
 ] dev https://github.com/sandimas/SmoQyDEAC.jl
 ```
-This command clones the [`SmoQyDEAC.jl`](https://github.com/sandimas/SmoQyDEAC.jl) repository to the hidden direcotry `.julia/dev` that exists in the same directory where Julia is installed.
+This command clones the [`SmoQyDEAC.jl`](https://github.com/sandimas/SmoQyDEAC.jl) repository to the hidden directory `.julia/dev` that exists in the same directory where Julia is installed.
 
 # Running SmoQyDEAC
 

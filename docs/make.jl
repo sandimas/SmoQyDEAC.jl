@@ -3,7 +3,7 @@ using SmoQyDEAC
 using Documenter
 using Literate
 
-example_names = ["fermion_greens"]#,"phonon_greens"]
+example_names = ["fermion_greens"]
 example_literate_sources = [joinpath(@__DIR__,"src/examples/"*name*".jl") for name in example_names]
 example_script_destinations = [joinpath(@__DIR__,"../scripts") for name in example_names]
 example_documentation_destination = joinpath(@__DIR__,"build/examples")
@@ -19,7 +19,7 @@ for i in eachindex(example_names)
                       documenter = true)
     Literate.script(example_literate_sources[i], example_script_destinations[i])
 end
-# exit()
+
 makedocs(;
     modules=[SmoQyDEAC],
     authors="James Neuhaus <jneuhau1@utk.edu>",

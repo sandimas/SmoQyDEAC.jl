@@ -8,6 +8,14 @@ function Χ²(observed::AbstractVector,calculated::AbstractMatrix,error::Abstrac
     return Χ
 end
 
+function Χ²_bin(observed::AbstractVector,calculated::AbstractMatrix,W::AbstractVector)
+    Χ = zeros(Float64,(size(calculated,2),))
+    for pop in 1:size(calculated,2)
+        Χ[pop] = sum( ((observed .- calculated[:,pop]).^2) .* W )
+    end
+    return Χ
+end
+
 # return mutant indices
 function get_mutant_indices(rng,pop_size)
     indices = zeros(Int64,(3,pop_size))
