@@ -13,7 +13,7 @@ include("DEAC/kernels.jl")
 include("DEAC/utility.jl")
 include("DEAC/checkpoint.jl")
 
-export DEAC
+export DEAC_Std
 export DEAC_Binned
 
 end # module SmoQyDEAC

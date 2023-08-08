@@ -7,35 +7,25 @@ function generate_K(params::DEACParameters)
     nω = size(params.out_ωs,1)
     ngrid = size(params.input_grid,1)
     K = zeros(Float64,(ngrid,nω))
-    dgrid = params.input_grid[2]-params.input_grid[1]
-
+    Δω = (params.out_ωs[end]-params.out_ωs[1])/(size(params.out_ωs,1)-1)
     if params.kernel_type == "time_bosonic"
         nb =  n_b(params)
         for ω in 1:nω
             for τ in 1:ngrid
-                K[τ,ω] = dgrid*exp(-params.out_ωs[ω]*params.input_grid[τ]) * nb[ω]
+                K[τ,ω] = Δω*exp(-params.out_ωs[ω]*params.input_grid[τ]) * nb[ω]
             end
         end
     elseif params.kernel_type == "time_bosonic_symmetric"
         nb = n_b(params)
         for ω in 1:nω
             for τ in 1:ngrid
-                K[τ,ω] = 0.5*dgrid*(exp(-params.out_ωs[ω]*params.input_grid[τ]) + exp(-params.out_ωs[ω]*(params.β - params.input_grid[τ]))) * nb[ω]
+                K[τ,ω] = 0.5*Δω*(exp(-params.out_ωs[ω]*params.input_grid[τ]) + exp(-params.out_ωs[ω]*(params.β - params.input_grid[τ]))) * nb[ω]
             end
         end
     elseif params.kernel_type == "time_fermionic"
         for ω in 1:nω
             for τ in 1:ngrid
-                K[τ,ω] = dgrid / (exp(params.out_ωs[ω] * params.input_grid[τ]) + exp(-params.out_ωs[ω] * (params.β - params.input_grid[τ])))
-            end
-        end
-        
-    elseif params.kernel_type == "time_fermionic_antisymmetric"
-        println("time_fermionic_antisymmetric NOT YET IMPLEMENTED")
-        exit()
-        for ω in 1:nω
-            for τ in 1:ngrid
-                K[τ,ω] = 0.5* dgrid * (exp(-params.out_ωs[ω] * params.input_grid[τ]) - exp(-params.out_ωs[ω] *(params.β - params.input_grid[τ]))) / (1 + exp(-params.β * params.out_ωs[ω]))
+                K[τ,ω] = Δω / (exp(params.out_ωs[ω] * params.input_grid[τ]) + exp(-params.out_ωs[ω] * (params.β - params.input_grid[τ])))
             end
         end
     end
