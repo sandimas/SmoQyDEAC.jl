@@ -27,11 +27,12 @@ using SmoQyDEAC
 using FileIO
 
 # We now load the data provided in our source file.
-loadfile = joinpath(pkgdir(SmoQyDEAC), "docs/src/examples/fermion_greens_input.jld2")
+loadfile = joinpath(pkgdir(SmoQyDEAC), "docs/src/examples/greens.jld2")
 input_dictionary = load(loadfile)
 
-G = input_dictionary["G"];
-G_error = input_dictionary["σ"];
+G_std = input_dictionary["G_std"];
+G_error = input_dictionary["G_err"];
+G_bin =  input_dictionary["G_bin"];
 τs = input_dictionary["τs"]; # must be evenly spaced.
 β = input_dictionary["β"];
 
@@ -63,8 +64,10 @@ keep_bin_data = true;
 #md ## If true, each bin will have it's data written to the output dictionary
 #md ## Set to false to save disk space
 
-# Run DEAC Algorithm
-output_dictionary = DEAC(G,G_error,β,τs,ωs,"time_fermionic",number_of_bins,runs_per_bin,output_file,
+# Run DEAC Algorithm for binned and unbinned
+output_dictionary = DEAC_Binned(G_bin,β,τs,ωs,"time_fermionic",number_of_bins,runs_per_bin,output_file,
+                         checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)
+output_dictionary_std = DEAC_Std(G_std,G_error,β,τs,ωs,"time_fermionic",number_of_bins,runs_per_bin,output_file,
                          checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)
 
 # Accessing output

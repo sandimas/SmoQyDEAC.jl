@@ -1,5 +1,5 @@
 
-# Generate Kernel
+# Generate Kernel * Δω
 # Notably, for bosonic kernels we multiply in a factor of ω.
 # This makes the kernel and the spectral function positive and analytic for all ω
 # Before we return data, though, we will multiply bosonic functions by ω
