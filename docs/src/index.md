@@ -19,10 +19,14 @@ This command clones the [`SmoQyDEAC.jl`](https://github.com/sandimas/SmoQyDEAC.j
 SmoQyDEAC has a simple API interface with a single callable function `DEAC`.
 
 ## API
-- [`DEAC`](@ref)
+- [`DEAC_Binned`](@ref)
+- [`DEAC_Std`](@ref)
 
 ```@docs
-DEAC
+DEAC_Binned
+```
+```@docs
+DEAC_Std
 ```
 
 ## Kernels
