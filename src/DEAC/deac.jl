@@ -187,13 +187,11 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                 )
     #
 
-    if bootstrap_bins !=0 
+    if bootstrap_bins !=0 || (size(correlation_function,1) < 5 * size(correlation_function,2))
+        bootstrap_bins = max(bootstrap_bins,5*size(correlation_function,2))
         correlation_function = bootstrap_samples(correlation_function,bootstrap_bins,base_seed )
     end
 
-    if size(correlation_function,1) < size(correlation_function,2) 
-        correlation_function = bootstrap_samples(correlation_function,2*size(correlation_function,2),base_seed )
-    end
 
     params = DEACParameters(β,input_grid,out_ωs,kernel_type,output_file,checkpoint_directory,
                             num_bins,runs_per_bin,population_size,base_seed,
