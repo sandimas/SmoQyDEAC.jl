@@ -31,9 +31,9 @@ DEAC_Std
 
 ## Kernels
 For now there are three supported kernels
-- `time_fermionic`$=\frac{1}{2}\frac{e^{-\tau\omega}}{1+e^{-\beta\omega}}$
-- `time_bosonic`$=\frac{1}{2}\frac{e^{-\tau\omega}}{1-e^{-\beta\omega}}$
-- `time_bosonic_symmetric`$=\frac{1}{2}\frac{e^{-\tau\omega}+e^{-(\beta-\tau)\omega}}{1-e^{-\beta\omega}}$
+- `time_fermionic`$=\frac{e^{-\tau\omega}}{1+e^{-\beta\omega}}$
+- `time_bosonic`$=\frac{e^{-\tau\omega}}{1-e^{-\beta\omega}}$
+- `time_bosonic_symmetric`$=\frac{e^{-\tau\omega}+e^{-(\beta-\tau)\omega}}{1-e^{-\beta\omega}}$
 
 # Multithreading
 SmoQyDEAC utilizes Julia's `Threads.@threads` multithreading capability. To take advantage of this run your code using 

@@ -182,9 +182,19 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                   number_of_generations::Int64=100000,
                   autoresume_from_checkpoint=false,
                   keep_bin_data=true,
-                  W_ratio_max = 1.0e6
+                  W_ratio_max = 1.0e6,
+                  bootstrap_bins = 0
                 )
     #
+
+    if bootstrap_bins !=0 
+        correlation_function = bootstrap_samples(correlation_function,bootstrap_bins,base_seed )
+    end
+
+    if size(correlation_function,1) < size(correlation_function,2) 
+        correlation_function = bootstrap_samples(correlation_function,2*size(correlation_function,2),base_seed )
+    end
+
     params = DEACParameters(β,input_grid,out_ωs,kernel_type,output_file,checkpoint_directory,
                             num_bins,runs_per_bin,population_size,base_seed,
                             crossover_probability,self_adapting_crossover_probability,
@@ -269,7 +279,8 @@ function run_DEAC(Greens_tuple,
         U_c = svd_corr.Vt
         
         # Inverse fit array for χ^2
-        W = (Nbins_in*(Nbins_in-1)) ./ (sigma_corr .* sigma_corr) 
+        U_c1 = size(U_c,1)
+        W = (2.0 * U_c1) ./ (sigma_corr .* sigma_corr) 
         
         # Deal with nearly singular matrix
         W_cap = W_ratio_max * minimum(W)
@@ -277,8 +288,9 @@ function run_DEAC(Greens_tuple,
         
         # rotate K and corr_avg
         Kp = U_c*K
-        corr_avg_p = zeros(Float64,Nbins_in)
-        for i in 1:Nbins_in
+        
+        corr_avg_p = zeros(Float64,U_c1)
+        for i in 1:U_c1
             corr_avg_p[i] = dot(view(U_c,i,:),corr_avg)
         end
 

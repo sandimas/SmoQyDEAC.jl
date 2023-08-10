@@ -12,6 +12,7 @@ include("DEAC/jackknife.jl")
 include("DEAC/kernels.jl")
 include("DEAC/utility.jl")
 include("DEAC/checkpoint.jl")
+include("DEAC/boostrap.jl")
 
 export DEAC_Std
 export DEAC_Binned

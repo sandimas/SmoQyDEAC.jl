@@ -97,7 +97,7 @@ G\left(\mathbf{k},\sigma,\tau>0\right)= & -\left\langle c_{\mathbf{k},\sigma}\le
 \end{align*}
 ```
 
-This gives us the fermionic kernel of $\frac{1}{2}\frac{e^{-\omega\tau}}{1+e^{-\beta\omega}}$. Doing the same treatment for antisymmetric fermionic correlations, bosonic correlations, and symmetric bosonic correlations we get the following kernels:
+This gives us the fermionic kernel of $\frac{e^{-\omega\tau}}{1+e^{-\beta\omega}}$. Doing the same treatment for antisymmetric fermionic correlations, bosonic correlations, and symmetric bosonic correlations we get the following kernels:
 ```math
 \begin{align*}
 K_{fermion}\left(\omega,\tau\right)= & \frac{1}{2}\frac{e^{-\tau\omega}}{1+e^{-\beta\omega}}\\
