@@ -92,22 +92,22 @@ G\left(\mathbf{k},\sigma,\tau>0\right)= & -\left\langle c_{\mathbf{k},\sigma}\le
 = & -\frac{1}{Z}\sum_{n}e^{-\beta E_{n}}e^{\tau E_{n}}\left\langle n\left|c_{\mathbf{k},\sigma}e^{-\tau H}c_{\mathbf{k},\sigma}^{\dagger}\right|n\right\rangle \\
 = & -\frac{1}{Z}\sum_{m,n}e^{-\beta E_{n}}e^{\tau\left(E_{n}-E_{m}\right)}\left\langle n\left|c_{\mathbf{k},\sigma}\right|m\right\rangle \left\langle m\left|c_{\mathbf{k},\sigma}^{\dagger}\right|n\right\rangle \\
 = & -\frac{1}{Z}\sum_{m,n}e^{-\beta E_{n}}e^{\tau\left(E_{n}-E_{m}\right)}\left|\left\langle m\left|c_{\mathbf{k},\sigma}^{\dagger}\right|n\right\rangle \right|^{2}\\
-= & -\int_{-\infty}^{\infty}\frac{d\omega}{2\pi}\frac{e^{-\omega\tau}}{1+e^{-\beta\omega}}\Im G\left(\mathbf{k},\sigma,\omega\right)\\
-= & \int_{-\infty}^{\infty}\frac{d\omega}{2}\frac{e^{-\omega\tau}}{1+e^{-\beta\omega}}A\left(\mathbf{k},\sigma,\omega\right)\\
+= & -\int_{-\infty}^{\infty}\frac{d\omega}{\pi}\frac{e^{-\omega\tau}}{1+e^{-\beta\omega}}\Im G\left(\mathbf{k},\sigma,\omega\right)\\
+= & \int_{-\infty}^{\infty} d\omega \frac{e^{-\omega\tau}}{1+e^{-\beta\omega}}A\left(\mathbf{k},\sigma,\omega\right)\\
 \end{align*}
 ```
 
 This gives us the fermionic kernel of $\frac{e^{-\omega\tau}}{1+e^{-\beta\omega}}$. Doing the same treatment for antisymmetric fermionic correlations, bosonic correlations, and symmetric bosonic correlations we get the following kernels:
 ```math
 \begin{align*}
-K_{fermion}\left(\omega,\tau\right)= & \frac{1}{2}\frac{e^{-\tau\omega}}{1+e^{-\beta\omega}}\\
+K_{fermion}\left(\omega,\tau\right)= & \frac{e^{-\tau\omega}}{1+e^{-\beta\omega}}\\
 K_{fermion,antisym}\left(\omega,\tau\right)= & \frac{1}{2}\frac{e^{-\tau\omega}-e^{-\left(\beta-\tau\right)\omega}}{1+e^{-\beta\omega}}\\
-K_{boson,asym}\left(\omega,\tau\right)= & \frac{1}{2}\frac{e^{-\tau\omega}}{1-e^{-\beta\omega}}\\
-K_{boson,sym}\left(\omega,\tau\right)= & \frac{1}{2}\frac{e^{-\tau\omega}+e^{-\left(\beta-\tau\right)}}{1-e^{-\beta\omega}}
+K_{boson,asym}\left(\omega,\tau\right)= & \frac{e^{-\tau\omega}}{1-e^{-\beta\omega}}\\
+K_{boson,sym}\left(\omega,\tau\right)= & \frac{e^{-\tau\omega}+e^{-\left(\beta-\tau\right)}}{1-e^{-\beta\omega}}
 \end{align*}
 ```
 
-### Kernel modifications for AC methods
+### Bosonic Kernel Modifications for AC methods
 
 For kernel functions odd about $\omega=0$ most AC codes will pull a factor of $\omega$ into the kernel. This makes the kernel analytic on the entire $\omega$ line but AC will give you $\frac{\rho(\omega)}{\omega}$. Some codes will return this value. DEAC.jl handles this in the back end and reports only $\rho(\omega)$.
 

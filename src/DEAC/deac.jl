@@ -114,13 +114,14 @@ end
          stop_minimum_fitness::Float64=1.0,
          number_of_generations::Int64=100000,
          keep_bin_data=true,
-         autoresume_from_checkpoint=true,
+         autoresume_from_checkpoint=false,
          
          crossover_probability::Float64=0.9,
          self_adapting_crossover_probability::Float64=0.1,
          differential_weight::Float64=0.9,
          self_adapting_differential_weight_probability::Float64=0.1,
-         self_adapting_differential_weight::Float64=0.9)
+         self_adapting_differential_weight::Float64=0.9,
+         )
     
 Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ fitting from the error passed in by `correlation_function_error`.
 # Arguments
@@ -149,6 +150,9 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `differential_weight::Float64=0.9`: Weight for second and third mutable indices
 - `self_adapting_differential_weight_probability::Float64=0.1`: Likelihood of SAD changing
 - `self_adapting_differential_weight::Float64=0.9`: SAD
+- `W_ratio_max::Float64=1.0e6`: Χ² ~ 1.0/σ², this parameter prevents [near] singularities for very small σ 
+- `bootstrap_bins::Int=0`: The algorithm requires more bins than τ steps. We use bootstrapping to get 5 * nτ bins by default. User may set this higher 
+                  
 
 Each run will use its own seed. E.g. if you run 10 bins with 100 runs per bin, you will use seeds `base_seed:base_seed+999`. 
 You may increment your base seed by 1000, use another output file name, and generate more statistics later.
@@ -187,7 +191,7 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                 )
     #
 
-    if bootstrap_bins !=0 || (size(correlation_function,1) < 5 * size(correlation_function,2))
+    if bootstrap_bins ≤ 0 || (size(correlation_function,1) < 5 * size(correlation_function,2))
         bootstrap_bins = max(bootstrap_bins,5*size(correlation_function,2))
         correlation_function = bootstrap_samples(correlation_function,bootstrap_bins,base_seed )
     end
@@ -397,7 +401,7 @@ function run_DEAC(Greens_tuple,
             fit, fit_idx = findmin(fitness_old)
             generations[run] = numgen
             # Testing info
-            println("fit, ", fit, "\t numgen, ", numgen)
+            # println("fit, ", fit, "\tnumgen, ", numgen)
             
             run_data[:,run] = population_old[:,fit_idx]
             

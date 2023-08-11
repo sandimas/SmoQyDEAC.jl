@@ -16,7 +16,7 @@
 # ```
 # Our relation uses the time fermionic kernel such that
 # ```math
-# G(k,τ)=\int_{-∞}^∞ dω K(ω,τ)A(ω)=\int_{-∞}^∞ \frac{dω}{2} \frac{e^{-τω}}{1+e^{-ωβ}}A(ω)
+# G(k,τ)=\int_{-∞}^∞ dω K(ω,τ)A(ω)=\int_{-∞}^∞ dω \frac{e^{-τω}}{1+e^{-ωβ}}A(ω)
 # ```
 # Since $A(ω)=-ℑG(ω)/π$ both negative signs that would normally be in the expression and factors of π cancel.
 #
@@ -45,10 +45,10 @@ end
 
 # Define necessary parameters for the DEAC run
 # Typically you will want at least 1,000 for number_of_bins * runs_per_bin
-# For speed's sake we only do 20 in this example. 
+# For speed's sake we only do 2*1 in this example. 
 number_of_bins = 2;
 runs_per_bin = 1 ;
-output_file = output_directory * "fermion_out.jld2";
+output_file = joinpath(output_directory, "fermion_out.jld2");
 checkpoint_directory = output_directory;
 nω = 401;
 ωmin = -10.;
@@ -59,7 +59,7 @@ nω = 401;
 # Set optional parameters
 base_seed = 1000000;
 #md ## Note, the seed will incement for each run. 
-#md ## Starting a new run at 1000020 will have unique output from this run
+#md ## Starting a new run at 1000002 will have output unique from this run
 keep_bin_data = true;
 #md ## If true, each bin will have it's data written to the output dictionary
 #md ## Set to false to save disk space
@@ -80,7 +80,6 @@ A_σ = output_dictionary["σ"];
 #md ## zeroth moment: For fermions it is G(0) + G(β) which should = 1.0. Float64s
 zeroth_calc = output_dictionary["zeroth_moment"];
 zeroth_σ = output_dictionary["zeroth_moment_σ"];
-expected_zeroth = output_dictionary["expected_zeroth_moment"];
 #md ## Number of average generations to converge, Float64
 avg_generations = output_dictionary["avg_generations"];
 

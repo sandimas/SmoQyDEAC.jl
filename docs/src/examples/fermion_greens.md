@@ -35,11 +35,12 @@ using FileIO
 We now load the data provided in our source file.
 
 ````@example fermion_greens
-loadfile = joinpath(pkgdir(SmoQyDEAC), "docs/src/examples/fermion_greens_input.jld2")
+loadfile = joinpath(pkgdir(SmoQyDEAC), "docs/src/examples/greens.jld2")
 input_dictionary = load(loadfile)
 
-G = input_dictionary["G"];
-G_error = input_dictionary["σ"];
+G_std = input_dictionary["G_std"];
+G_error = input_dictionary["G_err"];
+G_bin =  input_dictionary["G_bin"];
 τs = input_dictionary["τs"]; # must be evenly spaced.
 β = input_dictionary["β"];
 nothing #hide
@@ -57,12 +58,12 @@ end
 
 Define necessary parameters for the DEAC run
 Typically you will want at least 1,000 for number_of_bins * runs_per_bin
-For speed's sake we only do 20 in this example.
+For speed's sake we only do 2*1 in this example.
 
 ````@example fermion_greens
 number_of_bins = 2;
 runs_per_bin = 1 ;
-output_file = output_directory * "fermion_out.jld2";
+output_file = joinpath(output_directory, "fermion_out.jld2");
 checkpoint_directory = output_directory;
 nω = 401;
 ωmin = -10.;
@@ -76,16 +77,18 @@ Set optional parameters
 ````@example fermion_greens
 base_seed = 1000000;
 # Note, the seed will incement for each run.
-# Starting a new run at 1000020 will have unique output from this run
+# Starting a new run at 1000002 will have output unique from this run
 keep_bin_data = true;
 # If true, each bin will have it's data written to the output dictionary
 # Set to false to save disk space
 ````
 
-Run DEAC Algorithm
+Run DEAC Algorithm for binned and unbinned
 
 ````@example fermion_greens
-output_dictionary = DEAC(G,G_error,β,τs,ωs,"time_fermionic",number_of_bins,runs_per_bin,output_file,
+output_dictionary = DEAC_Binned(G_bin,β,τs,ωs,"time_fermionic",number_of_bins,runs_per_bin,output_file,
+                         checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)
+output_dictionary_std = DEAC_Std(G_std,G_error,β,τs,ωs,"time_fermionic",number_of_bins,runs_per_bin,output_file,
                          checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)
 ````
 
@@ -101,7 +104,6 @@ A_σ = output_dictionary["σ"];
 # zeroth moment: For fermions it is G(0) + G(β) which should = 1.0. Float64s
 zeroth_calc = output_dictionary["zeroth_moment"];
 zeroth_σ = output_dictionary["zeroth_moment_σ"];
-expected_zeroth = output_dictionary["expected_zeroth_moment"];
 # Number of average generations to converge, Float64
 avg_generations = output_dictionary["avg_generations"];
 nothing #hide
