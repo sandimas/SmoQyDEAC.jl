@@ -401,7 +401,7 @@ function run_DEAC(Greens_tuple,
             fit, fit_idx = findmin(fitness_old)
             generations[run] = numgen
             # Testing info
-            # println("fit, ", fit, "\tnumgen, ", numgen)
+            println("fit, ", fit, "\tnumgen, ", numgen)
             
             run_data[:,run] = population_old[:,fit_idx]
             

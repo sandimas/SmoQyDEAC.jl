@@ -20,7 +20,7 @@ G(k,τ)=⟨T_{τ}c_k(τ)c_k^†(0)⟩
 ```
 Our relation uses the time fermionic kernel such that
 ```math
-G(k,τ)=\int_{-∞}^∞ dω K(ω,τ)A(ω)=\int_{-∞}^∞ \frac{dω}{2} \frac{e^{-τω}}{1+e^{-ωβ}}A(ω)
+G(k,τ)=\int_{-∞}^∞ dω K(ω,τ)A(ω)=\int_{-∞}^∞ dω \frac{e^{-τω}}{1+e^{-ωβ}}A(ω)
 ```
 Since $A(ω)=-ℑG(ω)/π$ both negative signs that would normally be in the expression and factors of π cancel.
 
