@@ -10,13 +10,14 @@
          output_file::String,
          checkpoint_directory::String;
 
+         find_ideal_fitness::Bool=true
          population_size::Int64=8,
          base_seed::Integer=8675309,
-         stop_minimum_fitness::Float64=1.0,
          number_of_generations::Int64=100000,
          keep_bin_data=true,
          autoresume_from_checkpoint=true,
          
+         stop_minimum_fitness::Float64=1.0,
          crossover_probability::Float64=0.9,
          self_adapting_crossover_probability::Float64=0.1,
          differential_weight::Float64=0.9,
@@ -37,14 +38,15 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `checkpoint_directory::String`: Directory to store checkpoint data. 
 
 # Optional Arguments
+- `find_ideal_fitness::Bool=true`: Use ideal fitness finder
 - `population_size::Int64=8`: DEAC population size. Must be ≥ 6
 - `base_seed::Int64=8675309`: Seed
-- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good
 - `number_of_generations::Int64=100000`: Maximum number of mutation loops
 - `keep_bin_data::Bool=true`: Save binned data or not
 - `autoresume_from_checkpoint::Bool=true`: Resume from checkpoint if possible
 
 # Optional algorithm arguments
+- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
 - `crossover_probability::Float64=0.9`: Starting likelihood of crossover
 - `self_adapting_crossover_probability::Float64=0.1`: Chance of crossover probability changing
 - `differential_weight::Float64=0.9`: Weight for second and third mutable indices
@@ -84,7 +86,8 @@ function DEAC_Std(correlation_function::AbstractVector,
                   number_of_generations::Int64=100000,
                   autoresume_from_checkpoint=false,
                   keep_bin_data=true,
-                  W_ratio_max = 1.0e6
+                  W_ratio_max = 1.0e6,
+                  find_ideal_fitness::Bool=true
                 )
     #
     println("\n*** It is highly recommended to use binned data and the covariant matrix method instead (DEAC_Binned) if possible ***\n")
@@ -109,13 +112,14 @@ end
          output_file::String,
          checkpoint_directory::String;
 
+         find_ideal_fitness::Bool=true
          population_size::Int64=8,
          base_seed::Integer=8675309,
-         stop_minimum_fitness::Float64=1.0,
          number_of_generations::Int64=100000,
          keep_bin_data=true,
          autoresume_from_checkpoint=false,
          
+         stop_minimum_fitness::Float64=1.0,
          crossover_probability::Float64=0.9,
          self_adapting_crossover_probability::Float64=0.1,
          differential_weight::Float64=0.9,
@@ -137,14 +141,15 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `checkpoint_directory::String`: Directory to store checkpoint data. 
 
 # Optional Arguments
+- `find_ideal_fitness::Bool=true`: Use ideal fitness finder
 - `population_size::Int64=8`: DEAC population size. Must be ≥ 6
 - `base_seed::Int64=8675309`: Seed
-- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good
 - `number_of_generations::Int64=100000`: Maximum number of mutation loops
 - `keep_bin_data::Bool=true`: Save binned data or not
 - `autoresume_from_checkpoint::Bool=true`: Resume from checkpoint if possible
 
 # Optional algorithm arguments
+- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
 - `crossover_probability::Float64=0.9`: Starting likelihood of crossover
 - `self_adapting_crossover_probability::Float64=0.1`: Chance of crossover probability changing
 - `differential_weight::Float64=0.9`: Weight for second and third mutable indices
@@ -184,10 +189,11 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                   self_adapting_differential_weight::Float64=0.9,
                   stop_minimum_fitness::Float64=1.0,
                   number_of_generations::Int64=100000,
-                  autoresume_from_checkpoint=false,
-                  keep_bin_data=true,
-                  W_ratio_max = 1.0e6,
-                  bootstrap_bins = 0
+                  autoresume_from_checkpoint::Bool=false,
+                  keep_bin_data::Bool=true,
+                  W_ratio_max::Float64 = 1.0e6,
+                  bootstrap_bins::Int = 0,
+                  find_ideal_fitness::Bool = true
                 )
     #
 
@@ -203,7 +209,7 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                             differential_weight,self_adapting_differential_weight_probability,
                             self_adapting_differential_weight,stop_minimum_fitness,number_of_generations)
     #
-    return run_DEAC((correlation_function,nothing),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max)
+    return run_DEAC((correlation_function,nothing),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max,find_ideal_fitness)
 end    
 
 # Run the DEAC algorithm
@@ -211,7 +217,8 @@ function run_DEAC(Greens_tuple,
                   params::DEACParameters,
                   autoresume_from_checkpoint::Bool,
                   keep_bin_data::Bool,
-                  W_ratio_max::Float64)
+                  W_ratio_max::Float64,
+                  find_ideal_fitness::Bool)
     
     # Assert parameters are within allowable/realistic ranges
     @assert params.population_size >= 6 # DEAC can be run with as few as 4, but it gives garbage results
@@ -228,6 +235,8 @@ function run_DEAC(Greens_tuple,
     @assert params.number_of_generations >= 1
     @assert params.base_seed >= 1
 
+    fit_array = zeros(Float64,(params.num_bins,params.runs_per_bin,params.number_of_generations))
+
     use_binned = Greens_tuple[2] == nothing
     correlation_function = Greens_tuple[1]
 
@@ -237,6 +246,7 @@ function run_DEAC(Greens_tuple,
     bin_error = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
 
 
+    true_fitness = params.stop_minimum_fitness
 
     # Checkpoint
     if autoresume_from_checkpoint
@@ -249,6 +259,7 @@ function run_DEAC(Greens_tuple,
                 bin_data = chk_dict["bin_data"]
                 bin_error = chk_dict["bin_error"]
                 calculated_zeroth_moment = chk_dict["zeroth"]
+                true_fitness = chk_dict["true_fitness"]
             else
                 println("Checkpoint found at "*params.checkpoint_directory*"/DEAC_checkpoint.jld2")
                 println("Mismatched parameters. Exiting")
@@ -307,9 +318,115 @@ function run_DEAC(Greens_tuple,
     #######################################
     calculated_zeroth_moment = zeros(Float64,(1,params.num_bins))
 
+
     # loop over bins
     for bin in start_bin:params.num_bins
         
+        # Fitness Finder
+        if bin == 1 && find_ideal_fitness
+            println("Finding Ideal Fitness Parameter")
+            fit_check_frequency = 10000
+            fit_check_difference = 0.1
+            fit_mod = 1.01
+            nthreads = Threads.nthreads()
+            nfinder = max(nthreads,10)
+            fitness = zeros(Float64,nfinder)
+
+            Threads.@threads for thd in 1:nfinder
+
+                seed = params.base_seed + thd
+                rng = Random.Xoshiro(seed)
+                population_old  = reshape(Random.rand(rng,size(params.out_ωs,1)*params.population_size),(size(params.out_ωs,1),params.population_size))
+                for pop in 1:params.population_size
+                    population_old[:,pop] = population_old[:,pop] ./ sum(population_old[:,pop])
+                end
+               
+                
+                population_new = zeros(Float64,(size(params.out_ωs,1),params.population_size))
+                population_new = zeros(Float64,(size(params.out_ωs,1),params.population_size))
+            
+                # Get model Fitness
+                model = *(Kp,population_old)
+
+                fitness_old = Χ²(corr_avg_p,model,W) ./ size(params.input_grid,1)
+                
+                # Set initial parameters for algo
+                crossover_probability_new = zeros(Float64,params.population_size)
+                crossover_probability_old = zeros(Float64,params.population_size)
+                crossover_probability_old .= params.crossover_probability
+
+                differential_weights_new = zeros(Float64,params.population_size)
+                differential_weights_old = zeros(Float64,params.population_size)
+                differential_weights_old .= params.differential_weight
+
+                lastDelta = typemax(Float64)
+                lastFitness = minimum(fitness_old)
+                last2Fitness = typemax(Float64)
+                Delta = typemax(Float64)
+                for gen in 1:params.number_of_generations
+                    for pop in 1:params.population_size
+                        crossover_probability_new[pop] = (Random.rand(rng,Float64)<params.self_adapting_crossover_probability) ? rand(rng,Float64) : crossover_probability_old[pop]
+                        differential_weights_new[pop] = (Random.rand(rng,Float64)<params.self_adapting_differential_weight_probability) ? 2.0*rand(rng,Float64) : differential_weights_old[pop]
+                    end
+
+                    # Randomly set some ω points to 'mutate'
+                    mutate_indices_rnd = Random.rand(rng,Float64, (params.population_size,size(params.out_ωs,1))) 
+                    mutate_indices = Array{Bool}(undef,(params.population_size,size(params.out_ωs,1)))
+                    for pop in 1:params.population_size
+                        mutate_indices[pop,:] = mutate_indices_rnd[pop,:] .< crossover_probability_new[pop]
+                    end
+                    # Set triplet of other populations for mutations
+                    mutant_indices = get_mutant_indices(rng,params.population_size)
+                    
+                    # if mutate_indices, do mutation, else keep same
+                    for pop in 1:params.population_size
+                        for ω in 1:size(params.out_ωs,1)
+                            if mutate_indices[pop,ω]
+                                population_new[ω,pop] = abs(population_old[ω,mutant_indices[1,pop]] + differential_weights_new[pop]*
+                                                            (population_old[ω,mutant_indices[2,pop]]-population_old[ω,mutant_indices[3,pop]]))
+                            else
+                                population_new[ω,pop] = population_old[ω,pop]
+                            end
+                        end
+                    end
+                    
+                    model = *(Kp,population_new)
+                    
+                    fitness_new = Χ²(corr_avg_p,model,W) ./ size(params.input_grid,1)
+                    for pop in 1:params.population_size
+                        if fitness_new[pop] <= fitness_old[pop]
+                            fitness_old[pop] = fitness_new[pop]
+                            crossover_probability_old[pop] = crossover_probability_new[pop]
+                            differential_weights_old[pop] = differential_weights_new[pop]
+                            population_old[:,pop] = population_new[:,pop]
+                        end
+                    end
+                    if (gen % fit_check_frequency) == 0
+                        
+                        last2Fitness = lastFitness
+                        lastFitness = minimum(fitness_new)
+                        lastDelta = Delta
+                        Delta = (last2Fitness-lastFitness)/lastFitness
+
+                        if (Delta < fit_check_difference) && (lastDelta < fit_check_difference)
+                            fitness[thd] = lastFitness
+                            println(gen)
+                            break
+                        end
+                    end
+                end # generations
+            end #threads
+
+            # Find ideal Fitness
+            true_fitness = minimum(fitness) * fit_mod
+            println(@sprintf("Using Ideal Fitness:  %01.5f",true_fitness))
+
+
+        end
+
+
+
+
         generations = zeros(Int64,params.runs_per_bin)
 
         # Multithread each run per bin. 
@@ -344,16 +461,15 @@ function run_DEAC(Greens_tuple,
             differential_weights_old .= params.differential_weight
             numgen = 0
 
+
             # Loop over generations until number_of_generations or fitness is achieved
             for gen in 1:params.number_of_generations
             
                 # If fitness achieved, exit loop
                 minimum_fitness = minimum(fitness_old)
-                if (minimum_fitness <= params.stop_minimum_fitness) 
-
+                fit_array[bin,run,gen] = minimum_fitness
+                if (minimum_fitness <= true_fitness) 
                     break
-                # else 
-                #     println(minimum_fitness)
                 end
             
                 # Modify DEAC parameters stochastically
@@ -422,7 +538,7 @@ function run_DEAC(Greens_tuple,
         println("Finished bin ",bin," of ",params.num_bins)
         
         if bin != params.num_bins
-            save_checkpoint(bin_data,bin_error,bin,params,Greens_tuple,calculated_zeroth_moment)
+            save_checkpoint(bin_data,bin_error,bin,params,Greens_tuple,calculated_zeroth_moment,true_fitness)
         end
         
     end # bins
@@ -453,7 +569,8 @@ function run_DEAC(Greens_tuple,
             "avg_generations" => gen_per_run,
             "bin_data" => bin_data,
             "bin_σ" => bin_error,
-            "bin_zeroth_moment" => calculated_zeroth_moment
+            "bin_zeroth_moment" => calculated_zeroth_moment,
+            "fit_array" => fit_array
         )
     else
         bin_dict = Dict{String,Any}(
