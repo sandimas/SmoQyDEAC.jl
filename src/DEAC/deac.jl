@@ -464,7 +464,7 @@ function run_DEAC(Greens_tuple,
             
                 # If fitness achieved, exit loop
                 minimum_fitness = minimum(fitness_old)
-                [bin,run,gen] = minimum_fitness
+                
                 if (minimum_fitness <= true_fitness) 
                     break
                 end
