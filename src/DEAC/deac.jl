@@ -15,7 +15,7 @@
          base_seed::Integer=8675309,
          number_of_generations::Int64=100000,
          keep_bin_data=true,
-         autoresume_from_checkpoint=true,
+         autoresume_from_checkpoint=false,
          
          stop_minimum_fitness::Float64=1.0,
          crossover_probability::Float64=0.9,
@@ -43,7 +43,7 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `base_seed::Int64=8675309`: Seed
 - `number_of_generations::Int64=100000`: Maximum number of mutation loops
 - `keep_bin_data::Bool=true`: Save binned data or not
-- `autoresume_from_checkpoint::Bool=true`: Resume from checkpoint if possible
+- `autoresume_from_checkpoint::Bool=false`: Resume from checkpoint if possible
 
 # Optional algorithm arguments
 - `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
@@ -146,7 +146,7 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `base_seed::Int64=8675309`: Seed
 - `number_of_generations::Int64=100000`: Maximum number of mutation loops
 - `keep_bin_data::Bool=true`: Save binned data or not
-- `autoresume_from_checkpoint::Bool=true`: Resume from checkpoint if possible
+- `autoresume_from_checkpoint::Bool=false`: Resume from checkpoint if possible
 
 # Optional algorithm arguments
 - `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
@@ -234,8 +234,6 @@ function run_DEAC(Greens_tuple,
     @assert params.stop_minimum_fitness > 0.0
     @assert params.number_of_generations >= 1
     @assert params.base_seed >= 1
-
-    fit_array = zeros(Float64,(params.num_bins,params.runs_per_bin,params.number_of_generations))
 
     use_binned = Greens_tuple[2] == nothing
     correlation_function = Greens_tuple[1]
@@ -410,7 +408,6 @@ function run_DEAC(Greens_tuple,
 
                         if (Delta < fit_check_difference) && (lastDelta < fit_check_difference)
                             fitness[thd] = lastFitness
-                            println(gen)
                             break
                         end
                     end
@@ -467,7 +464,7 @@ function run_DEAC(Greens_tuple,
             
                 # If fitness achieved, exit loop
                 minimum_fitness = minimum(fitness_old)
-                fit_array[bin,run,gen] = minimum_fitness
+                [bin,run,gen] = minimum_fitness
                 if (minimum_fitness <= true_fitness) 
                     break
                 end
@@ -569,8 +566,7 @@ function run_DEAC(Greens_tuple,
             "avg_generations" => gen_per_run,
             "bin_data" => bin_data,
             "bin_σ" => bin_error,
-            "bin_zeroth_moment" => calculated_zeroth_moment,
-            "fit_array" => fit_array
+            "bin_zeroth_moment" => calculated_zeroth_moment
         )
     else
         bin_dict = Dict{String,Any}(
