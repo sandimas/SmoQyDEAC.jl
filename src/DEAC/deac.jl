@@ -329,6 +329,7 @@ function run_DEAC(Greens_tuple,
     calculated_zeroth_moment = zeros(Float64,(1,params.num_bins))
     start_thread = (start_bin-1) * params.runs_per_bin +1
     
+    ### Find Ideal Fitness
     if find_ideal_fitness && start_bin == 1
         println("Finding Ideal Fitness Parameter")
         fit_check_frequency = 10000
@@ -521,10 +522,7 @@ function run_DEAC(Greens_tuple,
             curbin = (1 + finished_runs ÷ params.runs_per_bin)
             
             finished_runs += 1
-            # println("1 ",params.runs_per_bin)
-            # println("2 ",thisrun)
-            # println("3 ",finished_runs ÷ params.runs_per_bin)
-            # println("4 ",finished_runs,"\n")
+            
             run_data[:,curbin] += population_old[:,fit_idx]
             generations[curbin] += numgen
             seed_vec[thd] = 0
