@@ -25,16 +25,18 @@ function delete_checkpoint(params::DEACParameters)
 end
 
 
-function save_checkpoint(bin_data, bin_err, bin_num, params::DEACParameters,G_tuple,zeroth_momentum::AbstractArray,true_fitness)
+function save_checkpoint(bin_data, generations, bin_num, params::DEACParameters,G_tuple,zeroth_momentum::AbstractArray,true_fitness,seed_vec)
     file = params.checkpoint_directory*"/DEAC_checkpoint.jld2"
+    seeds = filder(x->x≠0,seed_vec)
     chk_data = Dict{String,Any}(
         "bin_data" => bin_data,
-        "bin_error" => bin_err,
+        "generations" => generations,
         "bin_num" => bin_num,
         "params" => params,
         "G_tuple" => G_tuple,
         "zeroth" => zeroth_momentum,
-        "true_fitness" => true_fitness
+        "true_fitness" => true_fitness,
+        "seeds" => seeds
     )
     FileIO.save(file,chk_data)
 end
