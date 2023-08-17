@@ -16,6 +16,7 @@
          number_of_generations::Int64=100000,
          keep_bin_data=true,
          autoresume_from_checkpoint=false,
+         verbose::Bool=false,
          
          stop_minimum_fitness::Float64=1.0,
          crossover_probability::Float64=0.9,
@@ -44,6 +45,7 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `number_of_generations::Int64=100000`: Maximum number of mutation loops
 - `keep_bin_data::Bool=true`: Save binned data or not
 - `autoresume_from_checkpoint::Bool=false`: Resume from checkpoint if possible
+- `verbose::Bool=false`: Print stats per run
 
 # Optional algorithm arguments
 - `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
@@ -87,7 +89,8 @@ function DEAC_Std(correlation_function::AbstractVector,
                   autoresume_from_checkpoint=false,
                   keep_bin_data=true,
                   W_ratio_max = 1.0e6,
-                  find_ideal_fitness::Bool=true
+                  find_ideal_fitness::Bool=true,
+                  verbose::Bool=false,
                 )
     #
     println("\n*** It is highly recommended to use binned data and the covariant matrix method instead (DEAC_Binned) if possible ***\n")
@@ -97,7 +100,7 @@ function DEAC_Std(correlation_function::AbstractVector,
                             differential_weight,self_adapting_differential_weight_probability,
                             self_adapting_differential_weight,stop_minimum_fitness,number_of_generations)
     #
-    return run_DEAC((correlation_function,correlation_function_error),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max)
+    return run_DEAC((correlation_function,correlation_function_error),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max,find_ideal_fitness,verbose)
 end    
 
 
@@ -118,6 +121,7 @@ end
          number_of_generations::Int64=100000,
          keep_bin_data=true,
          autoresume_from_checkpoint=false,
+         verbose::Bool=false,
          
          stop_minimum_fitness::Float64=1.0,
          crossover_probability::Float64=0.9,
@@ -147,6 +151,7 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `number_of_generations::Int64=100000`: Maximum number of mutation loops
 - `keep_bin_data::Bool=true`: Save binned data or not
 - `autoresume_from_checkpoint::Bool=false`: Resume from checkpoint if possible
+- `verbose::Bool=false`: Print stats per run
 
 # Optional algorithm arguments
 - `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
@@ -193,7 +198,8 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                   keep_bin_data::Bool=true,
                   W_ratio_max::Float64 = 1.0e6,
                   bootstrap_bins::Int = 0,
-                  find_ideal_fitness::Bool = true
+                  find_ideal_fitness::Bool = true,
+                  verbose::Bool=false,
                 )
     #
 
@@ -209,7 +215,7 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                             differential_weight,self_adapting_differential_weight_probability,
                             self_adapting_differential_weight,stop_minimum_fitness,number_of_generations)
     #
-    return run_DEAC((correlation_function,nothing),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max,find_ideal_fitness)
+    return run_DEAC((correlation_function,nothing),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max,find_ideal_fitness,verbose)
 end    
 
 # Run the DEAC algorithm
@@ -218,7 +224,8 @@ function run_DEAC(Greens_tuple,
                   autoresume_from_checkpoint::Bool,
                   keep_bin_data::Bool,
                   W_ratio_max::Float64,
-                  find_ideal_fitness::Bool)
+                  find_ideal_fitness::Bool,
+                  verbose::Bool)
     
     # Assert parameters are within allowable/realistic ranges
     @assert params.population_size >= 6 # DEAC can be run with as few as 4, but it gives garbage results
@@ -415,11 +422,9 @@ function run_DEAC(Greens_tuple,
             end # generations
         end #threads
 
-        # Find ideal Fitness
+        # Calculate ideal Fitness
         true_fitness = minimum(fitness) * fit_mod
         println(@sprintf("Using Ideal Fitness:  %01.5f",true_fitness))
-
-
     end
 
 
@@ -509,14 +514,24 @@ function run_DEAC(Greens_tuple,
         end # generations
         fit, fit_idx = findmin(fitness_old)
         
-        # Testing info
         lock(thread_lock) do 
-            println("fit, ", fit, "\tnumgen, ", numgen)
-            curbin = 1 + finished_runs / params.runs_per_bin
+            
+            
+            thisrun = 1 + finished_runs % params.runs_per_bin
+            curbin = (1 + finished_runs ÷ params.runs_per_bin)
+            
             finished_runs += 1
+            # println("1 ",params.runs_per_bin)
+            # println("2 ",thisrun)
+            # println("3 ",finished_runs ÷ params.runs_per_bin)
+            # println("4 ",finished_runs,"\n")
             run_data[:,curbin] += population_old[:,fit_idx]
             generations[curbin] += numgen
             seed_vec[thd] = 0
+
+            if verbose
+                println(@sprintf("  Bin %3u | Run %4u | Fitness %6.4f | Generations %u",curbin,thisrun,fit,numgen))
+            end
 
             # Bin done
             if finished_runs % params.runs_per_bin == 0
@@ -532,7 +547,7 @@ function run_DEAC(Greens_tuple,
                     save_checkpoint(bin_data,generations,curbin,params,Greens_tuple,calculated_zeroth_moment,true_fitness,seed_vec)
                 end
                  
-                println("Finished bin ",bin," of ",params.num_bins)
+                println("Finished bin ",curbin," of ",params.num_bins)
     
             end
         end
@@ -573,7 +588,6 @@ function run_DEAC(Greens_tuple,
             "zeroth_moment_σ" => zero_err[1],
             "avg_generations" => gen_per_run,
             "bin_data" => bin_data,
-            "bin_σ" => bin_error,
             "bin_zeroth_moment" => calculated_zeroth_moment
         )
     else
