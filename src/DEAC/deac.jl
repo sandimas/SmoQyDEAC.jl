@@ -333,7 +333,7 @@ function run_DEAC(Greens_tuple,
         println("Finding Ideal Fitness Parameter")
         fit_check_frequency = 10000
         fit_check_difference = 0.1
-        fit_mod = 1.01
+        fit_mod = 1.025
         nthreads = Threads.nthreads()
         nfinder = max(nthreads,10)
         fitness = zeros(Float64,nfinder)
@@ -530,7 +530,7 @@ function run_DEAC(Greens_tuple,
             seed_vec[thd] = 0
 
             if verbose
-                println(@sprintf("  Bin %3u | Run %4u | Fitness %6.4f | Generations %u",curbin,thisrun,fit,numgen))
+                println(@sprintf("  Bin %3u | Run %4u | Fitness %8.6f | Generations %u",curbin,thisrun,fit,numgen))
             end
 
             # Bin done
@@ -551,13 +551,7 @@ function run_DEAC(Greens_tuple,
     
             end
         end
-        # total_runs = params.runs_per_bin*params.num_bins
-        # seed_vec = collect(params.base_seed:params.base_seed +(total_runs -1))
-        # generations = UInt64(0)
-        # finished_runs = 0
-        # start_thread = (start_bin-1) * params.runs_per_bin +1
-        # run_data = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
-        # thread_lock = ReentrantLock()
+        
 
     end # threads
     
