@@ -27,15 +27,17 @@ keep_bin_data = true;
 # Set to false to save disk space</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>Run DEAC Algorithm for binned and unbinned</p><pre><code class="language-julia hljs">output_dictionary = DEAC_Binned(G_bin,β,τs,ωs,&quot;time_fermionic&quot;,number_of_bins,runs_per_bin,output_file,
                          checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)
 output_dictionary_std = DEAC_Std(G_std,G_error,β,τs,ωs,&quot;time_fermionic&quot;,number_of_bins,runs_per_bin,output_file,
-                         checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, Any} with 8 entries:
-  &quot;zeroth_moment&quot;     =&gt; 0.998664
-  &quot;A&quot;                 =&gt; [4.8721e-8, 2.14859e-7, 4.77202e-6, 1.51657e-6, 6.7071…
-  &quot;zeroth_moment_σ&quot;   =&gt; 1.24309e-5
-  &quot;bin_data&quot;          =&gt; [2.91146e-13 9.74418e-8; 1.11017e-7 3.18702e-7; … ; 0.…
+                         checkpoint_directory,base_seed=base_seed,keep_bin_data=keep_bin_data)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, Any} with 10 entries:
+  &quot;zeroth_moment&quot;     =&gt; 0.998655
+  &quot;A&quot;                 =&gt; [5.82986e-9, 8.5823e-8, 1.82136e-8, 3.51077e-7, 8.3800…
+  &quot;zeroth_moment_σ&quot;   =&gt; 4.7109e-5
+  &quot;bin_data&quot;          =&gt; [1.1098e-8 5.61673e-10; 1.57157e-7 1.44885e-8; … ; 3.4…
   &quot;avg_generations&quot;   =&gt; 200000.0
-  &quot;σ&quot;                 =&gt; [4.87207e-8, 1.03843e-7, 3.93293e-6, 1.46107e-6, 3.368…
+  &quot;σ&quot;                 =&gt; [5.26818e-9, 7.13345e-8, 1.36573e-8, 3.40185e-7, 8.378…
+  &quot;fitness_target&quot;    =&gt; 0.0
   &quot;ωs&quot;                =&gt; [-10.0, -9.95, -9.9, -9.85, -9.8, -9.75, -9.7, -9.65, …
-  &quot;bin_zeroth_moment&quot; =&gt; [0.998677 0.998652]</code></pre><p>Accessing output</p><pre><code class="language-julia hljs"># Spectral function, 1D array size (nω)
+  &quot;runtime&quot;           =&gt; 14.9597
+  &quot;bin_zeroth_moment&quot; =&gt; [0.998702 0.998608]</code></pre><p>Accessing output</p><pre><code class="language-julia hljs"># Spectral function, 1D array size (nω)
 A = output_dictionary[&quot;A&quot;];
 # Spectral function error, 1D array size (nω)
 A_σ = output_dictionary[&quot;σ&quot;];
@@ -52,12 +54,14 @@ bin_σ = output_dictionary[&quot;bin_σ&quot;];
 # zeroth moment, 1D array (nbins)
 bin_zeroth = output_dictionary[&quot;bin_zeroth_moment&quot;];
 nothing #hide</code></pre><p>The dictionary will automatically be saved</p><pre><code class="language-julia hljs"># Example of loading the data from the jld2
-test_dictionary = FileIO.load(output_file)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, Any} with 8 entries:
-  &quot;zeroth_moment&quot;     =&gt; 0.998664
-  &quot;A&quot;                 =&gt; [4.8721e-8, 2.14859e-7, 4.77202e-6, 1.51657e-6, 6.7071…
-  &quot;zeroth_moment_σ&quot;   =&gt; 1.24309e-5
-  &quot;bin_data&quot;          =&gt; [2.91146e-13 9.74418e-8; 1.11017e-7 3.18702e-7; … ; 0.…
+test_dictionary = FileIO.load(output_file)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Dict{String, Any} with 10 entries:
+  &quot;zeroth_moment&quot;     =&gt; 0.998655
+  &quot;A&quot;                 =&gt; [5.82986e-9, 8.5823e-8, 1.82136e-8, 3.51077e-7, 8.3800…
+  &quot;zeroth_moment_σ&quot;   =&gt; 4.7109e-5
+  &quot;bin_data&quot;          =&gt; [1.1098e-8 5.61673e-10; 1.57157e-7 1.44885e-8; … ; 3.4…
   &quot;avg_generations&quot;   =&gt; 200000.0
-  &quot;σ&quot;                 =&gt; [4.87207e-8, 1.03843e-7, 3.93293e-6, 1.46107e-6, 3.368…
+  &quot;σ&quot;                 =&gt; [5.26818e-9, 7.13345e-8, 1.36573e-8, 3.40185e-7, 8.378…
+  &quot;fitness_target&quot;    =&gt; 0.0
   &quot;ωs&quot;                =&gt; [-10.0, -9.95, -9.9, -9.85, -9.8, -9.75, -9.7, -9.65, …
-  &quot;bin_zeroth_moment&quot; =&gt; [0.998677 0.998652]</code></pre><p>This is identical to output_dictionary</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../derivations/">Derivations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Thursday 17 August 2023 17:42">Thursday 17 August 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  &quot;runtime&quot;           =&gt; 14.9597
+  &quot;bin_zeroth_moment&quot; =&gt; [0.998702 0.998608]</code></pre><p>This is identical to output_dictionary</p><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../derivations/">Derivations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 18 August 2023 15:12">Friday 18 August 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
