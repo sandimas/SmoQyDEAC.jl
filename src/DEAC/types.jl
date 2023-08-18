@@ -1,12 +1,7 @@
-
-
 # List of allowed kernels
 allowable_kernels = ["time_bosonic",
                      "time_fermionic",
                      "time_bosonic_symmetric",
-                    #  "freq_bosonic",
-                    #  "freq_fermionic",
-                    #  "time_fermionic_antisymmetric"
                     ]
 
 
@@ -25,7 +20,7 @@ end
 
 # DEACParameters
 #
-# A struct containing all of the parameters passed in to the DEAC algorithm
+# A struct containing parameters passed in to the DEAC algorithm
 #
 mutable struct DEACParameters <: Comparable
     β::Float64

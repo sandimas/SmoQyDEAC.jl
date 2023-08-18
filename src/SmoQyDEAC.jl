@@ -5,6 +5,8 @@ using Statistics
 using FileIO
 using Printf
 using LinearAlgebra
+using CPUTime
+using JLD2
 
 include("DEAC/types.jl")
 include("DEAC/deac.jl")

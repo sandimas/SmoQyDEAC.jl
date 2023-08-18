@@ -1,14 +1,15 @@
 
-# Fit function
+# χ² fit 
 function Χ²(observed::AbstractVector,calculated::AbstractMatrix,W::AbstractVector)
     Χ = zeros(Float64,(size(calculated,2),))
     for pop in 1:size(calculated,2)
         Χ[pop] = sum( ((observed .- calculated[:,pop]).^2) .* W )
     end
     return Χ
-end
+end # χ²
 
 # return mutant indices
+# links our genomes together for mutation
 function get_mutant_indices(rng,pop_size)
     indices = zeros(Int64,(3,pop_size))
     for pop in 1:pop_size
@@ -24,4 +25,4 @@ function get_mutant_indices(rng,pop_size)
         end
     end
     return indices
-end
+end # get_mutant_indices

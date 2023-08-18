@@ -46,9 +46,9 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `keep_bin_data::Bool=true`: Save binned data or not
 - `autoresume_from_checkpoint::Bool=false`: Resume from checkpoint if possible
 - `verbose::Bool=false`: Print stats per run
+- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
 
 # Optional algorithm arguments
-- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
 - `crossover_probability::Float64=0.9`: Starting likelihood of crossover
 - `self_adapting_crossover_probability::Float64=0.1`: Chance of crossover probability changing
 - `differential_weight::Float64=0.9`: Weight for second and third mutable indices
@@ -101,7 +101,7 @@ function DEAC_Std(correlation_function::AbstractVector,
                             self_adapting_differential_weight,stop_minimum_fitness,number_of_generations)
     #
     return run_DEAC((correlation_function,correlation_function_error),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max,find_ideal_fitness,verbose)
-end    
+end # DEAC_Std
 
 
 @doc raw"""
@@ -122,8 +122,8 @@ end
          keep_bin_data=true,
          autoresume_from_checkpoint=false,
          verbose::Bool=false,
-         
          stop_minimum_fitness::Float64=1.0,
+         
          crossover_probability::Float64=0.9,
          self_adapting_crossover_probability::Float64=0.1,
          differential_weight::Float64=0.9,
@@ -152,9 +152,9 @@ Runs the DEAC algorithm on data passed in `correlation_function` using $\Chi^2$ 
 - `keep_bin_data::Bool=true`: Save binned data or not
 - `autoresume_from_checkpoint::Bool=false`: Resume from checkpoint if possible
 - `verbose::Bool=false`: Print stats per run
+- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
 
 # Optional algorithm arguments
-- `stop_minimum_fitness::Float64=1.0`: Value below which fit is considered good, only applies if `find_ideal_fitness=false`
 - `crossover_probability::Float64=0.9`: Starting likelihood of crossover
 - `self_adapting_crossover_probability::Float64=0.1`: Chance of crossover probability changing
 - `differential_weight::Float64=0.9`: Weight for second and third mutable indices
@@ -202,7 +202,7 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                   verbose::Bool=false,
                 )
     #
-
+    # Bootstrap bins to ensure sufficient bin size
     if bootstrap_bins ≤ 0 || (size(correlation_function,1) < 5 * size(correlation_function,2))
         bootstrap_bins = max(bootstrap_bins,5*size(correlation_function,2))
         correlation_function = bootstrap_samples(correlation_function,bootstrap_bins,base_seed )
@@ -216,7 +216,7 @@ function DEAC_Binned(correlation_function::AbstractMatrix,
                             self_adapting_differential_weight,stop_minimum_fitness,number_of_generations)
     #
     return run_DEAC((correlation_function,nothing),params,autoresume_from_checkpoint,keep_bin_data,W_ratio_max,find_ideal_fitness,verbose)
-end    
+end # DEAC_Binned()
 
 # Run the DEAC algorithm
 function run_DEAC(Greens_tuple,
@@ -242,24 +242,29 @@ function run_DEAC(Greens_tuple,
     @assert params.number_of_generations >= 1
     @assert params.base_seed >= 1
 
+    # Declare variables, set defaults, pre-calculations
+    bin_data = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
+    generations = zeros(UInt64,params.num_bins)
+    run_data = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
+    calculated_zeroth_moment = zeros(Float64,(1,params.num_bins))
+    
     use_binned = Greens_tuple[2] == nothing
     correlation_function = Greens_tuple[1]
-
     start_bin = 1
-
-    bin_data = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
-
     true_fitness = params.stop_minimum_fitness
     total_runs = params.runs_per_bin*params.num_bins
     seed_vec = collect(params.base_seed:params.base_seed +(total_runs -1))
-    generations = zeros(UInt64,params.num_bins)
     finished_runs = 0
+    Δω = (params.out_ωs[end]-params.out_ωs[1])/(size(params.out_ωs,1)-1)
     
-    run_data = zeros(Float64,(size(params.out_ωs,1),params.num_bins))
+    # Utilize the correct kernel
+    K = generate_K(params)
+    
+    # prevent race conditions when threads finish
     thread_lock = ReentrantLock()
 
 
-    # Checkpoint
+    # Load from checkpoint if applicable
     if autoresume_from_checkpoint
         chk_exists, chk_dict = find_checkpoint(params)
         if chk_exists
@@ -277,22 +282,15 @@ function run_DEAC(Greens_tuple,
                 println("Mismatched parameters. Exiting")
                 exit()
             end
-        end
-    end
+        end # if file exists
+    end # if checkpoint
 
-
-    # Utilize the correct kernel
-    K = generate_K(params)
-    
-
-    Δω = (params.out_ωs[end]-params.out_ωs[1])/(size(params.out_ωs,1)-1)
+    start_thread = (start_bin-1) * params.runs_per_bin +1
     
 
     if use_binned
-        ###################
         # Covariance Methods
-        ###################
-
+        
         # SVD on correlation bins
         corr_avg = Statistics.mean(correlation_function,dims=1)
         svd_corr = svd(correlation_function .- corr_avg)
@@ -301,7 +299,8 @@ function run_DEAC(Greens_tuple,
         # Unitary transformation matrix
         U_c = svd_corr.Vt
         
-        # Inverse fit array for χ^2
+        # Inverse fit W array for χ^2
+        # (2.0 * U_c1) factor generally gives ideal fit ~0.1-1.0
         U_c1 = size(U_c,1)
         W = (2.0 * U_c1) ./ (sigma_corr .* sigma_corr) 
         
@@ -318,20 +317,23 @@ function run_DEAC(Greens_tuple,
         end
 
     else
+        # Diagonal error method
         W = 1.0 ./ (Greens_tuple[2] .* Greens_tuple[2])
         W_cap = W_ratio_max * minimum(W)
         clamp!(W,0.0,W_cap)
         Kp = K
         corr_avg_p = Greens_tuple[1]
-
     end
-    #######################################
-    calculated_zeroth_moment = zeros(Float64,(1,params.num_bins))
-    start_thread = (start_bin-1) * params.runs_per_bin +1
+
+    
     
     ### Find Ideal Fitness
+    # If, for a thread, over the course of two consecutive fit_check_frequency generations
+    # there is ≤ 10% improvement that thread's current fitness goes into fitness array
+    # Ideal fit is fit_mod * minimum(fitness)
     if find_ideal_fitness && start_bin == 1
         println("Finding Ideal Fitness Parameter")
+        CPUtic()
         fit_check_frequency = 10000
         fit_check_difference = 0.1
         fit_mod = 1.025
@@ -394,12 +396,14 @@ function run_DEAC(Greens_tuple,
                         else
                             population_new[ω,pop] = population_old[ω,pop]
                         end
-                    end
-                end
+                    end # ω
+                end # pop
                 
+                # calculate new fitness
                 model = *(Kp,population_new)
-                
                 fitness_new = Χ²(corr_avg_p,model,W) ./ size(params.input_grid,1)
+
+                # update populations if fitness improved
                 for pop in 1:params.population_size
                     if fitness_new[pop] <= fitness_old[pop]
                         fitness_old[pop] = fitness_new[pop]
@@ -407,7 +411,9 @@ function run_DEAC(Greens_tuple,
                         differential_weights_old[pop] = differential_weights_new[pop]
                         population_old[:,pop] = population_new[:,pop]
                     end
-                end
+                end # pop
+
+                # check for low improvement for two consecutive slices, break if so
                 if (gen % fit_check_frequency) == 0
                     
                     last2Fitness = lastFitness
@@ -419,16 +425,18 @@ function run_DEAC(Greens_tuple,
                         fitness[thd] = lastFitness
                         break
                     end
-                end
+                end # if fit_check_frequency
             end # generations
         end #threads
 
-        # Calculate ideal Fitness
+        # Calculate ideal Fitness, print 
         true_fitness = minimum(fitness) * fit_mod
-        println(@sprintf("Using Ideal Fitness:  %01.5f",true_fitness))
+        Δt = CPUtoc()
+        println(@sprintf("\nFitness found in %01.5fs",Δt))
+        println(@sprintf("Using Ideal Fitness:  %01.5f\n",true_fitness))
     end
 
-
+    CPUtic()
     # loop over bins*runs_per_bin
     Threads.@threads for thd in start_thread:total_runs
 
@@ -458,6 +466,8 @@ function run_DEAC(Greens_tuple,
         differential_weights_new = zeros(Float64,params.population_size)
         differential_weights_old = zeros(Float64,params.population_size)
         differential_weights_old .= params.differential_weight
+
+        # track number of generations to get to fitness
         numgen = 0
 
 
@@ -499,9 +509,11 @@ function run_DEAC(Greens_tuple,
                 end
             end
             
+            # get new fitness
             model = *(Kp,population_new)
-            
             fitness_new = Χ²(corr_avg_p,model,W) ./ size(params.input_grid,1)
+
+            # if improved do updates
             for pop in 1:params.population_size
                 if fitness_new[pop] <= fitness_old[pop]
                     fitness_old[pop] = fitness_new[pop]
@@ -515,8 +527,8 @@ function run_DEAC(Greens_tuple,
         end # generations
         fit, fit_idx = findmin(fitness_old)
         
+        # lock to prevent race conditions
         lock(thread_lock) do 
-            
             
             thisrun = 1 + finished_runs % params.runs_per_bin
             curbin = (1 + finished_runs ÷ params.runs_per_bin)
@@ -525,13 +537,16 @@ function run_DEAC(Greens_tuple,
             
             run_data[:,curbin] += population_old[:,fit_idx]
             generations[curbin] += numgen
+
+            # setting seed to 0 allows culling of used seeds in the checkpoint
+            # ensuring each seed is used once
             seed_vec[thd] = 0
 
             if verbose
                 println(@sprintf("  Bin %3u | Run %4u | Fitness %8.6f | Generations %u",curbin,thisrun,fit,numgen))
             end
 
-            # Bin done
+            # Calculate bin data if enough to finish a bin, checkpoint
             if finished_runs % params.runs_per_bin == 0
                 bin_data[:,curbin] = run_data[:,curbin] / params.runs_per_bin
                 calculated_zeroth_moment[1,curbin] = sum(bin_data[:,curbin]) .* Δω
@@ -546,20 +561,25 @@ function run_DEAC(Greens_tuple,
                 end
                  
                 println("Finished bin ",curbin," of ",params.num_bins)
-    
-            end
-        end
+
+            end # bin completing
+        end # lock(thread_lock)
         
 
     end # threads
-    
 
-    
+    # time stats
+    Δt = CPUtoc()
+    t_per_run = Δt/total_runs
+    t_per_bin = Δt/params.num_bins
+
+    # Merge data
     zero_avg, zero_err = jackknife(calculated_zeroth_moment)
     gen_per_run = sum(generations ./ params.runs_per_bin)[1]
     differential = 100.0*abs(1.0-zero_avg[1])
+    data, err = jackknife(bin_data)
     
-    # Merge data, save it, pass it back to user
+    # Print statistics
     println("\nSaving data to ",params.output_file," and deleting checkpoint file\n")
     
     println("Run Statistics")
@@ -569,8 +589,12 @@ function run_DEAC(Greens_tuple,
         println(@sprintf(" 0th moment difference: %01.3f%%",differential))
     end
     println(@sprintf(" Mean generations/run:  %01.3f",gen_per_run))
-    println(" ")
-    data, err = jackknife(bin_data)
+    println(@sprintf(" Total Run time:        %01.3fs",Δt))
+    println(@sprintf(" Run time per bin:      %01.3fs",t_per_bin))
+    println(@sprintf(" Run time per genome:   %01.3fs\n",t_per_run))
+    
+
+    # Create data dictionaries, save to file, and return via function call
     if keep_bin_data
         bin_dict = Dict{String,Any}(
             "A" => data,
@@ -580,7 +604,9 @@ function run_DEAC(Greens_tuple,
             "zeroth_moment_σ" => zero_err[1],
             "avg_generations" => gen_per_run,
             "bin_data" => bin_data,
-            "bin_zeroth_moment" => calculated_zeroth_moment
+            "bin_zeroth_moment" => calculated_zeroth_moment,
+            "fitness_target" =>  true_fitness,
+            "runtime" => Δt
         )
     else
         bin_dict = Dict{String,Any}(
@@ -589,7 +615,9 @@ function run_DEAC(Greens_tuple,
             "zeroth_moment" => zero_avg[1],
             "zeroth_moment_σ" => zero_err[1],
             "avg_generations" => gen_per_run,
-            "ωs" => params.out_ωs
+            "ωs" => params.out_ωs,
+            "fitness_target" =>  true_fitness,
+            "runtime" => Δt
         )
     end
     FileIO.save(params.output_file,bin_dict)

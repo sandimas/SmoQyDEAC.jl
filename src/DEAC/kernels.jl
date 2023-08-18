@@ -1,13 +1,16 @@
 
 # Generate Kernel * Δω
-# Notably, for bosonic kernels we multiply in a factor of ω.
+# Notably, for bosonic kernels we multiply in a factor of ω in the n_b routine.
 # This makes the kernel and the spectral function positive and analytic for all ω
 # Before we return data, though, we will multiply bosonic functions by ω
 function generate_K(params::DEACParameters)
     nω = size(params.out_ωs,1)
     ngrid = size(params.input_grid,1)
     K = zeros(Float64,(ngrid,nω))
+
     Δω = (params.out_ωs[end]-params.out_ωs[1])/(size(params.out_ωs,1)-1)
+
+
     if params.kernel_type == "time_bosonic"
         nb =  n_b(params)
         for ω in 1:nω
@@ -28,12 +31,12 @@ function generate_K(params::DEACParameters)
                 K[τ,ω] = Δω / (exp(params.out_ωs[ω] * params.input_grid[τ]) + exp(-params.out_ωs[ω] * (params.β - params.input_grid[τ])))
             end
         end
-    end
+    end # kernel_type
     return K
-end
+end # generate_K()
 
 
-# Bose factor * ω, 
+# calculate Bose factor * ω, 
 function n_b(params::DEACParameters)
     close = 1.0e-6
     nω = size(params.out_ωs,1)
@@ -47,4 +50,4 @@ function n_b(params::DEACParameters)
         end
     end 
     return arr
-end
+end # n_b()
