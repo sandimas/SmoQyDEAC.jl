@@ -5,8 +5,8 @@ using Statistics
 using FileIO
 using Printf
 using LinearAlgebra
-using CPUTime
 using JLD2
+using LoopVectorization
 
 include("DEAC/types.jl")
 include("DEAC/deac.jl")
@@ -18,5 +18,9 @@ include("DEAC/boostrap.jl")
 
 export DEAC_Std
 export DEAC_Binned
+
+function __init__()
+    BLAS.set_num_threads(1)
+end
 
 end # module SmoQyDEAC
